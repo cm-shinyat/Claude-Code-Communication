@@ -1,0 +1,62 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { verifyToken } from './lib/auth';
+
+const protectedRoutes = ['/api/users', '/api/texts', '/api/characters', '/api/translations'];
+const adminOnlyRoutes = ['/api/users/create', '/api/users/delete', '/api/admin'];
+
+export function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  
+  const isProtectedRoute = protectedRoutes.some(route => 
+    pathname.startsWith(route)
+  );
+  
+  const isAdminRoute = adminOnlyRoutes.some(route => 
+    pathname.startsWith(route)
+  );
+
+  if (isProtectedRoute) {
+    const authHeader = request.headers.get('authorization');
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { error: 'Authorization header missing or malformed' },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.substring(7);
+    const decoded = verifyToken(token);
+
+    if (!decoded) {
+      return NextResponse.json(
+        { error: 'Invalid or expired token' },
+        { status: 401 }
+      );
+    }
+
+    if (isAdminRoute && decoded.role !== 'admin') {
+      return NextResponse.json(
+        { error: 'Admin access required' },
+        { status: 403 }
+      );
+    }
+
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set('x-user-id', decoded.userId.toString());
+    requestHeaders.set('x-user-role', decoded.role);
+    requestHeaders.set('x-user-email', decoded.email);
+
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
+  }
+
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: ['/api/:path*']
+};

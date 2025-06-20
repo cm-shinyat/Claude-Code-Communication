@@ -1,0 +1,89 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: project-forest-config
+  namespace: ${NAMESPACE}
+  labels:
+    app: project-forest
+    environment: ${ENVIRONMENT}
+data:
+  # Application Configuration
+  NODE_ENV: "${NODE_ENV}"
+  APP_NAME: "${APP_NAME}"
+  APP_PORT: "${APP_PORT}"
+  APP_HOST: "${APP_HOST}"
+  
+  # Database Configuration (non-sensitive)
+  DB_HOST: "${DB_HOST}"
+  DB_PORT: "${DB_PORT}"
+  DB_NAME: "${DB_NAME}"
+  DB_CONNECTION_LIMIT: "${DB_CONNECTION_LIMIT:-10}"
+  DB_ACQUIRE_TIMEOUT: "${DB_ACQUIRE_TIMEOUT:-60000}"
+  DB_TIMEOUT: "${DB_TIMEOUT:-60000}"
+  
+  # Redis Configuration
+  REDIS_HOST: "${REDIS_HOST}"
+  REDIS_PORT: "${REDIS_PORT}"
+  REDIS_DB: "${REDIS_DB}"
+  
+  # API Configuration
+  API_RATE_LIMIT: "${API_RATE_LIMIT}"
+  API_TIMEOUT: "${API_TIMEOUT}"
+  API_VERSION: "${API_VERSION:-v1}"
+  
+  # File Upload Settings
+  MAX_FILE_SIZE: "${MAX_FILE_SIZE}"
+  UPLOAD_DIR: "${UPLOAD_DIR}"
+  ALLOWED_FILE_TYPES: "${ALLOWED_FILE_TYPES}"
+  
+  # Logging Configuration
+  LOG_LEVEL: "${LOG_LEVEL}"
+  LOG_FORMAT: "${LOG_FORMAT}"
+  LOG_OUTPUT: "${LOG_OUTPUT}"
+  
+  # Security Settings
+  JWT_EXPIRES_IN: "${JWT_EXPIRES_IN}"
+  SESSION_TIMEOUT: "${SESSION_TIMEOUT}"
+  BCRYPT_ROUNDS: "${BCRYPT_ROUNDS}"
+  
+  # Feature Flags
+  ENABLE_TRANSLATION_API: "${ENABLE_TRANSLATION_API:-true}"
+  ENABLE_CSV_IMPORT: "${ENABLE_CSV_IMPORT:-true}"
+  ENABLE_WEBSOCKETS: "${ENABLE_WEBSOCKETS:-true}"
+  ENABLE_AUDIT_LOG: "${ENABLE_AUDIT_LOG:-true}"
+  
+  # Performance Settings
+  CONNECTION_POOL_SIZE: "${CONNECTION_POOL_SIZE}"
+  QUERY_TIMEOUT: "${QUERY_TIMEOUT}"
+  CACHE_TTL: "${CACHE_TTL}"
+  
+  # Domain & SSL
+  DOMAIN: "${DOMAIN}"
+  SSL_ENABLED: "${SSL_ENABLED:-true}"
+  FORCE_HTTPS: "${FORCE_HTTPS:-true}"
+  
+  # CORS Settings
+  CORS_ORIGINS: "${CORS_ORIGINS}"
+  CORS_CREDENTIALS: "${CORS_CREDENTIALS:-true}"
+  
+  # Health Check Settings
+  HEALTH_CHECK_PATH: "${HEALTH_CHECK_PATH:-/api/health}"
+  HEALTH_CHECK_INTERVAL: "${HEALTH_CHECK_INTERVAL:-30}"
+  HEALTH_CHECK_TIMEOUT: "${HEALTH_CHECK_TIMEOUT:-5}"
+  READINESS_CHECK_PATH: "${READINESS_CHECK_PATH:-/api/ready}"
+  LIVENESS_CHECK_PATH: "${LIVENESS_CHECK_PATH:-/api/alive}"
+  
+  # Monitoring Settings
+  METRICS_ENABLED: "${METRICS_ENABLED:-true}"
+  METRICS_PORT: "${METRICS_PORT:-9090}"
+  TRACING_ENABLED: "${TRACING_ENABLED:-true}"
+  
+  # External API URLs
+  DEEPL_API_URL: "${DEEPL_API_URL}"
+  GOOGLE_TRANSLATE_API_URL: "${GOOGLE_TRANSLATE_API_URL}"
+  
+  # Email Configuration (non-sensitive)
+  SMTP_HOST: "${SMTP_HOST}"
+  SMTP_PORT: "${SMTP_PORT}"
+  SMTP_SECURE: "${SMTP_SECURE:-true}"
+  FROM_EMAIL: "${FROM_EMAIL}"

@@ -1,0 +1,92 @@
+# Project Forest Terraform Variables Example - ECS/Fargate Configuration
+# Copy this file to terraform.tfvars and update with your actual values
+
+# AWS Configuration
+aws_region = "ap-northeast-1"  # Tokyo region
+
+# Project Configuration
+project_name = "project-forest"
+environment  = "development"  # development, staging, or production
+
+# Network Configuration
+vpc_cidr = "10.0.0.0/16"
+
+# Environment-specific settings
+# Note: Many settings are automatically configured based on environment
+# Set auto_configure_environment = false to override individual settings
+
+# Development Environment (default settings)
+enable_high_availability   = false  # Single AZ for cost savings
+enable_nat_gateway         = false  # No NAT Gateway - ECS tasks in public subnets
+enable_cloudfront          = false  # No CDN for development
+enable_container_insights  = false  # No monitoring for cost savings
+
+# ECS Configuration
+app_image        = "your-account.dkr.ecr.ap-northeast-1.amazonaws.com/project-forest:latest"  # Replace with your ECR image
+app_port         = 3000
+ecs_cpu          = 256     # 0.25 vCPU
+ecs_memory       = 512     # 512 MB
+ecs_desired_count = 1      # Single task for development
+
+# CloudWatch Logs
+log_retention_days = 3     # Short retention for development
+
+# RDS Configuration
+db_allocated_storage = 20                              # 20 GB
+db_instance_class    = "db.t3.micro"                  # Smallest instance
+db_name              = "project_forest"
+db_username          = "admin"
+db_password          = "your-secure-database-password"  # Use a strong password
+
+# Security Configuration
+jwt_secret = "your-super-secret-jwt-key-change-this-in-production"  # Use a strong, random secret
+
+# Tags
+tags = {
+  Owner       = "DevTeam"
+  Project     = "ProjectForest"
+  Environment = "development"
+  CostCenter  = "Engineering"
+}
+
+# Example configurations for different environments:
+
+# Staging Environment:
+# environment              = "staging"
+# enable_high_availability = true   # Multi-AZ for resilience
+# enable_nat_gateway       = true   # Private subnets with NAT
+# enable_cloudfront        = false  # No CDN for staging
+# enable_container_insights = true  # Enable monitoring
+# ecs_cpu                  = 512    # 0.5 vCPU
+# ecs_memory               = 1024   # 1024 MB
+# ecs_desired_count        = 1      # Single task for staging
+# log_retention_days       = 7      # 1 week retention
+
+# Production Environment:
+# environment              = "production"
+# enable_high_availability = true   # Multi-AZ for high availability
+# enable_nat_gateway       = true   # Private subnets with NAT
+# enable_cloudfront        = true   # CDN for performance
+# enable_container_insights = true  # Full monitoring
+# ecs_cpu                  = 1024   # 1 vCPU
+# ecs_memory               = 2048   # 2048 MB
+# ecs_desired_count        = 2      # Multiple tasks for redundancy
+# db_instance_class        = "db.t3.small"  # Larger database instance
+# db_allocated_storage     = 100    # More storage
+# log_retention_days       = 30     # 30 days retention
+
+# Cost Estimates (ap-northeast-1 region):
+# Development: ~$25-35/month
+#   - ECS Fargate: ~$10/month (0.25 vCPU, 512MB, 1 task)
+#   - RDS t3.micro: ~$15/month
+#   - ALB: ~$20/month
+#   - No NAT Gateway: $0
+#   - CloudWatch Logs: ~$1/month
+#
+# Production: ~$150-200/month
+#   - ECS Fargate: ~$40/month (1 vCPU, 2GB, 2 tasks)
+#   - RDS t3.small: ~$30/month
+#   - ALB: ~$20/month
+#   - NAT Gateway: ~$45/month
+#   - CloudFront: ~$10/month
+#   - CloudWatch: ~$5/month

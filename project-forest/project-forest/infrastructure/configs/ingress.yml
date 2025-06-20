@@ -1,0 +1,111 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: project-forest-ingress
+  namespace: ${NAMESPACE}
+  labels:
+    app: project-forest
+    environment: ${ENVIRONMENT}
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "30"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "${CORS_ORIGINS}"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "${CORS_CREDENTIALS:-true}"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    # Rate limiting
+    nginx.ingress.kubernetes.io/rate-limit: "${API_RATE_LIMIT:-500}"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    nginx.ingress.kubernetes.io/rate-limit-connections: "10"
+    # Security headers
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      add_header X-Frame-Options DENY always;
+      add_header X-Content-Type-Options nosniff always;
+      add_header X-XSS-Protection "1; mode=block" always;
+      add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+      add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;
+      add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+    # Certificate management
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    cert-manager.io/acme-challenge-type: "http01"
+spec:
+  tls:
+  - hosts:
+    - ${DOMAIN}
+    secretName: project-forest-tls
+  rules:
+  - host: ${DOMAIN}
+    http:
+      paths:
+      # API endpoints
+      - path: /api/(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: project-forest-service
+            port:
+              number: 80
+      # Static assets
+      - path: /_next/(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: project-forest-service
+            port:
+              number: 80
+      - path: /favicon.ico
+        pathType: Exact
+        backend:
+          service:
+            name: project-forest-service
+            port:
+              number: 80
+      - path: /robots.txt
+        pathType: Exact
+        backend:
+          service:
+            name: project-forest-service
+            port:
+              number: 80
+      # Main application
+      - path: /(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: project-forest-service
+            port:
+              number: 80
+---
+# Additional ingress for metrics (internal only)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: project-forest-metrics-ingress
+  namespace: ${NAMESPACE}
+  labels:
+    app: project-forest
+    service: metrics
+  annotations:
+    kubernetes.io/ingress.class: "nginx-internal"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/whitelist-source-range: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+spec:
+  rules:
+  - host: metrics.${DOMAIN}
+    http:
+      paths:
+      - path: /metrics
+        pathType: Exact
+        backend:
+          service:
+            name: project-forest-metrics
+            port:
+              number: 9090
