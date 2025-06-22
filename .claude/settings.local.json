@@ -10,7 +10,16 @@
       "Bash(*worker*_done.txt*)",
       "Bash(mkdir:*)",
       "Bash(then)",
-      "Bash(else)"
+      "Bash(else)",
+      "Bash(chmod:*)",
+      "Bash(ls:*)",
+      "Bash(grep:*)",
+      "Bash(npm run build:*)",
+      "Bash(docker build:*)",
+      "Bash(docker tag:*)",
+      "Bash(docker push:*)",
+      "Bash(aws-vault exec:*)",
+      "Bash(curl:*)"
     ],
     "deny": []
   }
