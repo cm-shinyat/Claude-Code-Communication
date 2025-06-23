@@ -30,6 +30,9 @@ export function getPool(): mysql.Pool {
   return pool;
 }
 
+// Export pool for direct access
+export { pool };
+
 export async function executeQuery<T = any>(
   query: string,
   params: any[] = []

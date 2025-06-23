@@ -35,66 +35,71 @@ export default function CharacterManagement() {
     special_reactions: ''
   });
 
-  // Mock data for demonstration
+  // Load characters from API
   useEffect(() => {
-    const mockCharacters: Character[] = [
-      {
-        id: 1,
-        name: '主人公',
-        pronoun_first: '俺',
-        pronoun_second: '俺',
-        face_graphic: '/images/protagonist.png',
-        description: 'ゲームの主人公。正義感が強く、仲間思いの性格。',
-        traits: '勇敢、正義感、リーダーシップ',
-        favorites: '剣術、冒険、仲間との時間',
-        dislikes: '不正、裏切り、弱い者いじめ',
-        special_reactions: '怒り時は口調が荒くなる',
-        created_at: '2024-01-01T00:00:00Z',
-        updated_at: '2024-01-01T00:00:00Z'
-      },
-      {
-        id: 2,
-        name: 'エリス',
-        pronoun_first: '私',
-        pronoun_second: '私',
-        face_graphic: '/images/eris.png',
-        description: '魔法使いの少女。知識豊富で冷静だが、時に感情的になることも。',
-        traits: '知的、冷静、好奇心旺盛',
-        favorites: '読書、魔法研究、静かな場所',
-        dislikes: '騒がしい場所、無知、暴力',
-        special_reactions: '興奮すると早口になる',
-        created_at: '2024-01-02T00:00:00Z',
-        updated_at: '2024-01-02T00:00:00Z'
-      }
-    ];
-    setCharacters(mockCharacters);
+    fetchCharacters();
   }, []);
 
-  const filteredCharacters = characters.filter(character =>
-    character.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    character.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (editingCharacter) {
-      // Update existing character
-      setCharacters(characters.map(char => 
-        char.id === editingCharacter.id 
-          ? { ...char, ...formData, updated_at: new Date().toISOString() }
-          : char
-      ));
-    } else {
-      // Add new character
-      const newCharacter: Character = {
-        id: Math.max(...characters.map(c => c.id), 0) + 1,
-        ...formData,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      setCharacters([...characters, newCharacter]);
+  const fetchCharacters = async (search?: string) => {
+    try {
+      const url = search ? `/api/characters?search=${encodeURIComponent(search)}` : '/api/characters';
+      const response = await fetch(url);
+      if (response.ok) {
+        const data = await response.json();
+        setCharacters(data);
+      } else {
+        console.error('Failed to fetch characters');
+      }
+    } catch (error) {
+      console.error('Error fetching characters:', error);
     }
-    resetForm();
+  };
+
+  const filteredCharacters = searchTerm 
+    ? characters.filter(character =>
+        character.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        character.description.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : characters;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editingCharacter) {
+        // Update existing character
+        const response = await fetch(`/api/characters/${editingCharacter.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        });
+        
+        if (response.ok) {
+          await fetchCharacters();
+        } else {
+          console.error('Failed to update character');
+        }
+      } else {
+        // Add new character
+        const response = await fetch('/api/characters', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        });
+        
+        if (response.ok) {
+          await fetchCharacters();
+        } else {
+          console.error('Failed to create character');
+        }
+      }
+      resetForm();
+    } catch (error) {
+      console.error('Error submitting character:', error);
+    }
   };
 
   const handleEdit = (character: Character) => {
@@ -113,9 +118,21 @@ export default function CharacterManagement() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: number) => {
     if (confirm('このキャラクターを削除してもよろしいですか？')) {
-      setCharacters(characters.filter(char => char.id !== id));
+      try {
+        const response = await fetch(`/api/characters/${id}`, {
+          method: 'DELETE',
+        });
+        
+        if (response.ok) {
+          await fetchCharacters();
+        } else {
+          console.error('Failed to delete character');
+        }
+      } catch (error) {
+        console.error('Error deleting character:', error);
+      }
     }
   };
 
@@ -154,7 +171,10 @@ export default function CharacterManagement() {
           type="text"
           placeholder="キャラクター名または説明で検索..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            fetchCharacters(e.target.value);
+          }}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>

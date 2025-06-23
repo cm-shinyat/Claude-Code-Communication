@@ -1,0 +1,58 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Enable ECS Exec for Project Forest service
+
+Parameters:
+  ServiceName:
+    Type: String
+    Default: project-forest-demo-service
+    Description: Name of the ECS service
+  
+  ClusterName:
+    Type: String
+    Default: project-forest-demo-cluster
+    Description: Name of the ECS cluster
+
+Resources:
+  # Update the task role to allow SSM access for ECS Exec
+  TaskRolePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: ECSExecPolicy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - ssmmessages:CreateControlChannel
+              - ssmmessages:CreateDataChannel
+              - ssmmessages:OpenControlChannel
+              - ssmmessages:OpenDataChannel
+            Resource: '*'
+      Roles:
+        - !Ref TaskRole
+
+  TaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: project-forest-demo-task-role-exec
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+
+Outputs:
+  TaskRoleArn:
+    Description: ARN of the task role with ECS Exec permissions
+    Value: !GetAtt TaskRole.Arn
+  
+  Instructions:
+    Description: Next steps to enable ECS Exec
+    Value: |
+      1. Update your task definition to use the new task role ARN
+      2. Update the ECS service with --enable-execute-command flag
+      3. Use 'aws ecs execute-command' to access the container

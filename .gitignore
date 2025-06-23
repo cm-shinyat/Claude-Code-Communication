@@ -18,3 +18,4 @@ Thumbs.db
 *~
 .vscode/
 .idea/ 
+/project-forest/project-forest/terraform/bastion/.terraform/
