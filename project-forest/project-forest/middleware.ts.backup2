@@ -1,11 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from './lib/auth';
 
-const protectedRoutes = ['/api/users', '/api/texts', '/api/characters', '/api/translations'];
+const protectedRoutes = ['/api/users', '/api/texts', '/api/translations'];
 const adminOnlyRoutes = ['/api/users/create', '/api/users/delete', '/api/admin'];
 
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  
+  // Skip middleware for admin APIs
+  if (pathname.startsWith('/api/characters') || 
+      pathname.startsWith('/api/tags') || 
+      pathname.startsWith('/api/proper-nouns') || 
+      pathname.startsWith('/api/forbidden-words') || 
+      pathname.startsWith('/api/styles')) {
+    return NextResponse.next();
+  }
   
   const isProtectedRoute = protectedRoutes.some(route => 
     pathname.startsWith(route)

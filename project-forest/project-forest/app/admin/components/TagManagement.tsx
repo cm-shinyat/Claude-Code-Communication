@@ -25,75 +25,72 @@ export default function TagManagement() {
     description: ''
   });
 
-  // Mock data for demonstration
+  // Load tags from API
   useEffect(() => {
-    const mockTags: Tag[] = [
-      {
-        id: 1,
-        name: 'character_name',
-        display_text: '{CHARACTER_NAME}',
-        icon: '👤',
-        description: 'キャラクター名を動的に挿入するタグ',
-        created_at: '2024-01-01T00:00:00Z',
-        updated_at: '2024-01-01T00:00:00Z'
-      },
-      {
-        id: 2,
-        name: 'player_name',
-        display_text: '{PLAYER_NAME}',
-        icon: '🎮',
-        description: 'プレイヤー名を動的に挿入するタグ',
-        created_at: '2024-01-02T00:00:00Z',
-        updated_at: '2024-01-02T00:00:00Z'
-      },
-      {
-        id: 3,
-        name: 'item_name',
-        display_text: '{ITEM_NAME}',
-        icon: '📦',
-        description: 'アイテム名を動的に挿入するタグ',
-        created_at: '2024-01-03T00:00:00Z',
-        updated_at: '2024-01-03T00:00:00Z'
-      },
-      {
-        id: 4,
-        name: 'location_name',
-        display_text: '{LOCATION_NAME}',
-        icon: '🗺️',
-        description: '場所名を動的に挿入するタグ',
-        created_at: '2024-01-04T00:00:00Z',
-        updated_at: '2024-01-04T00:00:00Z'
-      }
-    ];
-    setTags(mockTags);
+    fetchTags();
   }, []);
 
-  const filteredTags = tags.filter(tag =>
-    tag.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    tag.display_text.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    tag.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (editingTag) {
-      // Update existing tag
-      setTags(tags.map(tag => 
-        tag.id === editingTag.id 
-          ? { ...tag, ...formData, updated_at: new Date().toISOString() }
-          : tag
-      ));
-    } else {
-      // Add new tag
-      const newTag: Tag = {
-        id: Math.max(...tags.map(t => t.id), 0) + 1,
-        ...formData,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      setTags([...tags, newTag]);
+  const fetchTags = async (search?: string) => {
+    try {
+      const url = search ? `/api/tags?search=${encodeURIComponent(search)}` : '/api/tags';
+      const response = await fetch(url);
+      if (response.ok) {
+        const data = await response.json();
+        setTags(data);
+      } else {
+        console.error('Failed to fetch tags');
+      }
+    } catch (error) {
+      console.error('Error fetching tags:', error);
     }
-    resetForm();
+  };
+
+  const filteredTags = searchTerm 
+    ? tags.filter(tag =>
+        tag.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        tag.display_text.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        tag.description.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : tags;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editingTag) {
+        // Update existing tag
+        const response = await fetch(`/api/tags/${editingTag.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        });
+        
+        if (response.ok) {
+          await fetchTags();
+        } else {
+          console.error('Failed to update tag');
+        }
+      } else {
+        // Add new tag
+        const response = await fetch('/api/tags', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        });
+        
+        if (response.ok) {
+          await fetchTags();
+        } else {
+          console.error('Failed to create tag');
+        }
+      }
+      resetForm();
+    } catch (error) {
+      console.error('Error submitting tag:', error);
+    }
   };
 
   const handleEdit = (tag: Tag) => {
@@ -107,9 +104,21 @@ export default function TagManagement() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: number) => {
     if (confirm('このタグを削除してもよろしいですか？関連するテキストからもタグが削除されます。')) {
-      setTags(tags.filter(tag => tag.id !== id));
+      try {
+        const response = await fetch(`/api/tags/${id}`, {
+          method: 'DELETE',
+        });
+        
+        if (response.ok) {
+          await fetchTags();
+        } else {
+          console.error('Failed to delete tag');
+        }
+      } catch (error) {
+        console.error('Error deleting tag:', error);
+      }
     }
   };
 
@@ -163,7 +172,10 @@ export default function TagManagement() {
           type="text"
           placeholder="タグ名、表示テキスト、説明で検索..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            fetchTags(e.target.value);
+          }}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>

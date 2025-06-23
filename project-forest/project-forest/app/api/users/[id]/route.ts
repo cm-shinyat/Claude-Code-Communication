@@ -4,12 +4,13 @@ import { hasPermission, canModifyUserRole } from '../../../../lib/rbac';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const routeParams = await context.params;
     const userRole = request.headers.get('x-user-role') as any;
     const requestingUserId = parseInt(request.headers.get('x-user-id') || '0');
-    const targetUserId = parseInt(params.id);
+    const targetUserId = parseInt(routeParams.id);
 
     const canViewUser = hasPermission(userRole, 'manage_users') || requestingUserId === targetUserId;
 
@@ -41,12 +42,13 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const routeParams = await context.params;
     const userRole = request.headers.get('x-user-role') as any;
     const requestingUserId = parseInt(request.headers.get('x-user-id') || '0');
-    const targetUserId = parseInt(params.id);
+    const targetUserId = parseInt(routeParams.id);
 
     const canEditUser = hasPermission(userRole, 'manage_users') || requestingUserId === targetUserId;
 
@@ -118,11 +120,12 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const routeParams = await context.params;
     const userRole = request.headers.get('x-user-role') as any;
-    const targetUserId = parseInt(params.id);
+    const targetUserId = parseInt(routeParams.id);
 
     if (!hasPermission(userRole, 'manage_users')) {
       return NextResponse.json(

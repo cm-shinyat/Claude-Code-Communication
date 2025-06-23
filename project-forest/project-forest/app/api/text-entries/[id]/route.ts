@@ -4,10 +4,11 @@ import { TextEntry, Translation, EditHistory } from '@/lib/types';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
+    const routeParams = await context.params;
+    const id = parseInt(routeParams.id);
     
     if (isNaN(id)) {
       return NextResponse.json(
@@ -73,10 +74,11 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
+    const routeParams = await context.params;
+    const id = parseInt(routeParams.id);
     const body = await request.json();
     
     if (isNaN(id)) {
@@ -156,11 +158,12 @@ export async function PUT(
 }
 
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
+    const routeParams = await context.params;
+    const id = parseInt(routeParams.id);
     
     if (isNaN(id)) {
       return NextResponse.json(

@@ -4,10 +4,11 @@ import { EditHistory } from '@/lib/types';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
+    const routeParams = await context.params;
+    const id = parseInt(routeParams.id);
     
     if (isNaN(id)) {
       return NextResponse.json(
@@ -66,10 +67,11 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const textEntryId = parseInt(params.id);
+    const routeParams = await context.params;
+    const textEntryId = parseInt(routeParams.id);
     const body = await request.json();
     
     if (isNaN(textEntryId)) {
